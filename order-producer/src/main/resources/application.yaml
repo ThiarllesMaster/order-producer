@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: order-producer
+
+aws:
+  region: eu-west-1
+  parameter-store:
+    order-queue-url: /lab/order-producer/sqs/order-queue-url
