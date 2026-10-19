@@ -1,50 +1,75 @@
+
 #!/bin/bash
+set -Eeuo pipefail
 
-set -e
+# ==================================================
+# Order Producer - EC2 Ubuntu
+# Java 21 + Maven + Docker
+# ==================================================
 
-echo "======================================"
-echo "Order Service - EC2 Bootstrap"
-echo "======================================"
+exec > >(tee -a /var/log/order-producer-userdata.log) 2>&1
 
-# Atualizar sistema
+echo "=== Inicio da preparacao: $(date -Is) ==="
+
+# 1. Atualizar o sistema
 apt-get update -y
 apt-get upgrade -y
 
-# Instalar ferramentas
+# 2. Instalar ferramentas
 apt-get install -y \
-    git \
-    curl \
-    wget \
-    unzip \
-    ca-certificates
+  git \
+  openjdk-21-jdk \
+  maven \
+  docker.io \
+  ca-certificates
 
-# Instalar JDK 21
-apt-get install -y openjdk-21-jdk
+# 3. Ativar Docker
+systemctl enable --now docker
 
-# Instalar Maven
-apt-get install -y maven
-
-# Verificar instalações
-echo "Java:"
+# 4. Validar ferramentas
 java -version
-
-echo "Maven:"
 mvn -version
-
-echo "Git:"
 git --version
+docker --version
 
-# Criar diretório da aplicação
-mkdir -p /opt/order-service
+# 5. Configurar repositorio GitHub
+REPO_URL="https://github.com/TEU-UTILIZADOR/TEU-REPOSITORIO.git"
+APP_DIR="/opt/order-producer"
 
-# Clonar projeto
-cd /opt/order-service
+mkdir -p /opt
 
-git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git .
+if [ ! -d "${APP_DIR}/.git" ]; then
+    git clone "${REPO_URL}" "${APP_DIR}"
+else
+    echo "Repositorio ja existe: ${APP_DIR}"
+fi
 
-# Garantir permissões
-chown -R ubuntu:ubuntu /opt/order-service
+cd "${APP_DIR}"
 
-echo "======================================"
-echo "Bootstrap concluído!"
-echo "======================================"
+# 6. Compilar a aplicacao Spring Boot
+if [ -f "./mvnw" ]; then
+    chmod +x ./mvnw
+    ./mvnw clean package -DskipTests
+else
+    mvn clean package -DskipTests
+fi
+
+# 7. Criar Dockerfile apenas se nao existir
+if [ ! -f Dockerfile ]; then
+    cat > Dockerfile <<'EOF'
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+EOF
+fi
+
+# 8. Construir imagem Docker
+docker build -t order-producer:1.0 .
+
+# 9. Mostrar resultado
+echo "=== Imagem Docker criada ==="
+docker images order-producer
+
+echo "=== Preparacao concluida: $(date -Is) ==="
