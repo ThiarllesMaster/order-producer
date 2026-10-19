@@ -33,7 +33,7 @@ git --version
 docker --version
 
 # 5. Configurar repositorio GitHub
-REPO_URL="https://github.com/TEU-UTILIZADOR/TEU-REPOSITORIO.git"
+REPO_URL="https://github.com/ThiarllesMaster/order-producer.git"
 APP_DIR="/opt/order-producer"
 
 mkdir -p /opt
