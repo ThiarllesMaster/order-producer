@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-producer-service
+spec:
+  type: ClusterIP
+  selector:
+    #The link to metadata in the deployment.yaml
+    app: order-producer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
