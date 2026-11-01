@@ -26,5 +26,6 @@ sudo apt-get install -y curl ca-certificates
 sudo snap install kubectl --classic
 kubectl version --client
 sudo apt install awscli
-aws eks update-kubeconfig --region eu-west-1 --name $CLUSTER_NAME
+aws sts get-caller-identity
+aws eks update-kubeconfig --region eu-west-1 --name EKS-Lab-Cluster
 
